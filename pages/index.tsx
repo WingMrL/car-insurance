@@ -91,7 +91,7 @@ const computeBizCounts = (buyInsuranceCount: TBuyInsuranceCount, yearRiskCountLi
       const rangeTotalRiskTimes = yearRiskCountList.slice(0, len - i - 1).reduce((t, n) => t + n);;
       key = `${year}y${rangeTotalRiskTimes}r`;
     }
-    counts.push(NCDCountMap[key]);
+    counts.push(NCDCountMap[key as keyof typeof NCDCountMap]);
   });
   return counts;
 }
