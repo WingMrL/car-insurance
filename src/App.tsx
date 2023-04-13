@@ -81,8 +81,10 @@ const computeBizCounts = (buyInsuranceCount: TBuyInsuranceCount, yearRiskCountLi
   const recent3YearRiskTimes = yearRiskCountList.slice(0, 3).reduce((t, n) => t + n);
   years.forEach((y, i) => {
     let key: string;
-    if (i === 3) {
-      key = recent3YearRiskTimes > 0 ? `3y0r` : `4y0r`;
+    if (counts[i - 1] === 0.6) {
+      key = `4y0r`;
+    } else if (i === 3) {
+      key = yearRiskCountList[0] > 0 ? `3y0r` : `4y0r`;
     } else if (recent3YearRiskTimes > 0) {
       const year = y > 3 ? 3 : y;
       const rangeTotalRiskTimes = yearRiskCountList.slice(0, len - i - 1).reduce((t, n) => t + n);;
@@ -97,6 +99,8 @@ const computeBizCounts = (buyInsuranceCount: TBuyInsuranceCount, yearRiskCountLi
   return counts;
 }
 
+const MAX_TIMES = 4;
+
 export default function App() {
   const [form] = Form.useForm<IFormValue>();
   const buyInsuranceCountString = Form.useWatch("buyInsuranceCount", form);
@@ -104,15 +108,19 @@ export default function App() {
   const buyInsuranceCountNum = Number(buyInsuranceCountString);
   const yearForceRiskCountNum = Number(yearForceRiskCountString);
 
+  const [lastYearCountState, setLastYearCountState] = React.useState<number>(0);
+
   const [oForcePays, setOForcePays] = React.useState<number[]>([]);
   const [nForcePays, setNForcePays] = React.useState<number[]>([]);
 
   const [oBizPays, setOBizPays] = React.useState<number[]>([]);
   const [nBizPays, setNBizPays] = React.useState<number[]>([]);
+  const [oBizCounts, setOBizCounts] = React.useState<number[]>([]);
+  const [nBizCounts, setNBizCounts] = React.useState<number[]>([]);
 
   const [firstYearBizPayComputed, setFirstYearBizPay] = React.useState<number>(0);
 
-  const [showResult, setShowResult] = React.useState<boolean>(false);
+  const [showResult, setShowResult] = React.useState<boolean>(true);
 
   const onFinish = (values: IFormValue) => {
     const {
@@ -134,9 +142,14 @@ export default function App() {
       setOForcePays([1045, 855, 760, 665]);
       setNForcePays([1045, 855, 760, 665]);
     } else if(yearForceRiskCount === 2) {
-      // 本来是 1 ，这次用了，肯定会用。如果本来是 2，这次不用，就比较蠢了
-      setOForcePays([950, 855, 760, 665]);
-      setNForcePays([1045, 855, 760, 665]);
+      if (isUseForce === '1') {
+        // 本来是 1 ，这次用了，肯定会用。如果本来是 2，这次不用，就比较蠢了
+        setOForcePays([950, 855, 760, 665]);
+        setNForcePays([1045, 855, 760, 665]);
+      } else {
+        setOForcePays([1045, 855, 760, 665]);
+        setNForcePays([1045, 855, 760, 665]);
+      }
     } else if (yearForceRiskCount === 1) {
       // 本来是 0 ，这次用了
       if (isUseForce === '1') {
@@ -168,27 +181,37 @@ export default function App() {
 
 
     // 商业险
-    const yearNRiskCountList = [yearRiskCount1, yearRiskCount2, yearRiskCount3, yearRiskCount4, yearRiskCount5];
-    const yearORiskCountList = [yearRiskCount1 === 0 ? 0 : yearRiskCount1 - 1, yearRiskCount2, yearRiskCount3, yearRiskCount4, yearRiskCount5];
+    const newYearRiskCount5 = yearRiskCount5 === 0 ? 0 : 1; // 只影响 0.5 折的情况
+    const yearNRiskCountList = [yearRiskCount1, yearRiskCount2, yearRiskCount3, yearRiskCount4, newYearRiskCount5];
+    const yearORiskCountList = [yearRiskCount1 === 0 ? 0 : yearRiskCount1 - 1, yearRiskCount2, yearRiskCount3, yearRiskCount4, newYearRiskCount5];
     // 新车首年商业保险的费用
     let firstYearBizPay: number;
     let riskCount_0Index = initNCDCountIndex + Number(buyInsuranceCount) - 2;
     let lastFewYearsRiskCount: number = 0;
     const START_INDEX = 1;
-    for (let i = START_INDEX; i < Number(buyInsuranceCount) - 2 + START_INDEX; i ++) {
-      lastFewYearsRiskCount += yearNRiskCountList[i];
+    const currentMaxTime = Number(buyInsuranceCount) - 2;
+    for (let i = START_INDEX; i <= currentMaxTime; i ++) {
+      if (currentMaxTime === MAX_TIMES && i === MAX_TIMES && lastFewYearsRiskCount > 0) {
+        // 如果 3 年内有出过险，就不用看第 4 年了
+        riskCount_0Index --;
+        break;
+      } else {
+        lastFewYearsRiskCount += yearNRiskCountList[i];
+      }
     }
     riskCount_0Index -= lastFewYearsRiskCount;
     const lastYearCountIndex = riskCount_0Index < 0 ? 0 : riskCount_0Index;
-    firstYearBizPay = Math.round(lastPayBiz / NCDCount[lastYearCountIndex]);
+    const lastYearCount = NCDCount[lastYearCountIndex];
+    setLastYearCountState(lastYearCount);
+    firstYearBizPay = Math.round(lastPayBiz / lastYearCount);
     setFirstYearBizPay(firstYearBizPay);
 
     const nextOCounts = computeBizCounts(buyInsuranceCount, yearORiskCountList);
+    setOBizCounts(nextOCounts);
     setOBizPays(nextOCounts.map(v => Math.round(v * firstYearBizPay)));
     const nextNCounts = computeBizCounts(buyInsuranceCount, yearNRiskCountList);
+    setNBizCounts(nextNCounts);
     setNBizPays(nextNCounts.map(v => Math.round(v * firstYearBizPay)));
-    
-    setShowResult(true);
   };
 
   const deltaForcePay = nForcePays.map((v, i) => v - oForcePays[i]).reduce((t, n) => t + n, 0);
@@ -334,17 +357,21 @@ export default function App() {
       </Form>
       {
         showResult &&
-        <div>
+        <div style={{height: 389}}>
           <div className="div" style={{ color: 'red' }}>!!! 数据是推算的，可能有误差，具体请咨询保险公司 !!!</div>
           <div className="div">===========================</div>
-          <div className="div">未来 4 年的交强险【不报保险的情况】约：{oForcePays.join(',')}</div>
-          <div className="div">未来 4 年的交强险【报保险的情况】约：{nForcePays.join(',')}</div>
+          <div className="div">未来 4 年的交强险【不报保险的情况】约：{oForcePays.join(' | ')}</div>
+          <div className="div">未来 4 年的交强险【报保险的情况】约：{nForcePays.join(' | ')}</div>
           <div className="div">如报保险，未来 4 年共计多出约：{deltaForcePay}</div>
           <div className="div" style={{ color: 'red' }}>另外，交强险只能用于第三方，不能用于自己 !!!</div>
           <div className="div">===========================</div>
+          <div className="div">上一年买保险时的折扣：{lastYearCountState}</div>
           <div className="div">【推算】新车商业险保险价约：{firstYearBizPayComputed}</div>
-          <div className="div">未来 4 年的商业险【不报保险的情况】约：{oBizPays.join(',')}</div>
-          <div className="div">未来 4 年的商业险【报保险的情况】约：{nBizPays.join(',')}</div>
+          <div className="div">===========================</div>
+          <div className="div">未来 4 年的商业险【不报保险的情况】的折扣：{oBizCounts.join(' | ')}</div>
+          <div className="div">未来 4 年的商业险【不报保险的情况】约：{oBizPays.join(' | ')}</div>
+          <div className="div">未来 4 年的商业险【报保险的情况】的折扣：{nBizCounts.join(' | ')}</div>
+          <div className="div">未来 4 年的商业险【报保险的情况】约：{nBizPays.join(' | ')}</div>
           <div className="div">如报保险，未来 4 年共计多出约：{deltaBizPay}</div>
           <div className="div">===========================</div>
           <div className="div">如果自讨腰包的钱比 { deltaBizPay + deltaForcePay } 还多，那就报保险.</div>
