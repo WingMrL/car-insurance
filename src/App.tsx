@@ -1,5 +1,6 @@
 import * as React from "react";
-import { Form, InputNumber, Button, Radio } from "antd";
+import { Form, InputNumber, Button, Radio, Image } from "antd";
+import referImg from './assets/risk.png';
 import "./App.css"
 
 type TBuyInsuranceCount = "2" | "3" | "4" | "5" | "6";;
@@ -357,27 +358,30 @@ export default function App() {
       </Form>
       {
         showResult &&
-        <div style={{height: 389}}>
+        <div style={{height: 420}}>
           <div className="div" style={{ color: 'red' }}>!!! 数据是推算的，可能有误差，具体请咨询保险公司 !!!</div>
           <div className="div">===========================</div>
-          <div className="div">未来 4 年的交强险【不报保险的情况】约：{oForcePays.join(' | ')}</div>
-          <div className="div">未来 4 年的交强险【报保险的情况】约：{nForcePays.join(' | ')}</div>
+          <div className="div">未来 4 年的交强险【不报保险】约：{oForcePays.join(' | ')}</div>
+          <div className="div">未来 4 年的交强险【报保险】约：{nForcePays.join(' | ')}</div>
           <div className="div">如报保险，未来 4 年共计多出约：{deltaForcePay}</div>
           <div className="div" style={{ color: 'red' }}>另外，交强险只能用于第三方，不能用于自己 !!!</div>
           <div className="div">===========================</div>
           <div className="div">上一年买保险时的折扣：{lastYearCountState}</div>
           <div className="div">【推算】新车商业险保险价约：{firstYearBizPayComputed}</div>
           <div className="div">===========================</div>
-          <div className="div">未来 4 年的商业险【不报保险的情况】的折扣：{oBizCounts.join(' | ')}</div>
-          <div className="div">未来 4 年的商业险【不报保险的情况】约：{oBizPays.join(' | ')}</div>
-          <div className="div">未来 4 年的商业险【报保险的情况】的折扣：{nBizCounts.join(' | ')}</div>
-          <div className="div">未来 4 年的商业险【报保险的情况】约：{nBizPays.join(' | ')}</div>
+          <div className="div">未来 4 年的商业险【不报保险】的折扣：{oBizCounts.join(' | ')}</div>
+          <div className="div">未来 4 年的商业险【不报保险】约：{oBizPays.join(' | ')}</div>
+          <div className="div">未来 4 年的商业险【报保险】的折扣：{nBizCounts.join(' | ')}</div>
+          <div className="div">未来 4 年的商业险【报保险】约：{nBizPays.join(' | ')}</div>
           <div className="div">如报保险，未来 4 年共计多出约：{deltaBizPay}</div>
           <div className="div">===========================</div>
           <div className="div">如果自讨腰包的钱比 { deltaBizPay + deltaForcePay } 还多，那就报保险.</div>
           <div className="div" style={{ color: 'red' }}>另外，交强险和商业商折扣与不影响。如果明确交强险能搞掂的，没有动到商业险的，基本都可以报保险。</div>
+          <div className="div">===========================</div>
         </div>
       }
+      <div className="div">参考:</div>
+      <Image src={referImg} />
     </div>
   );
 }
