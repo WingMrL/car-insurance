@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Form, InputNumber, Button, Radio, Image } from "antd";
-import referImg from './assets/risk.png';
+import referImg from './assets/risk.jpg';
 import "./App.css"
 
 type TBuyInsuranceCount = "2" | "3" | "4" | "5" | "6";;
