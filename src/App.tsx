@@ -358,7 +358,7 @@ export default function App() {
       </Form>
       {
         showResult &&
-        <div style={{height: 470}}>
+        <div>
           <div className="div" style={{ color: 'red' }}>!!! 数据是推算的，可能有误差，具体请咨询保险公司 !!!</div>
           <div className="div">===========================</div>
           <div className="div">未来 4 年的交强险【不报保险】约：{oForcePays.join(' | ')}</div>
